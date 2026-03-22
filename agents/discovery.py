@@ -8,8 +8,8 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
 from agents.llm import get_llm
-from tools.search import tavily_search, tavily_extract
-from tools.crawler import check_url
+from tools.search import tavily_search
+from tools.crawler import fetch_source, check_url
 from prompts.discovery import build_system_prompt, build_task
 from schema.graph import PipelineState
 from storage.source_store import save_discovered_sources
@@ -36,7 +36,7 @@ def format_discovery_result(url: str, source_type: str, description: str) -> str
     })
 
 
-TOOLS = [tavily_search, tavily_extract, check_url, format_discovery_result]
+TOOLS = [tavily_search, fetch_source, check_url, format_discovery_result]
 
 
 def create_discovery_agent(current_date: str | None = None):

@@ -31,8 +31,13 @@ WORKFLOW:
 1. Review the knowledge base to understand what metrics and data points are needed.
 2. Review the predefined sources to understand what is already covered.
 3. Use tavily_search to find new public data sources that could provide data for the initiatives.
-4. Verify discovered sources are accessible using check_url.
-5. Return each discovered source using format_discovery_result.
+4. Optionally use fetch_source to inspect a candidate page and confirm it has relevant data.
+   fetch_source automatically handles HTML, PDF, CSV, JSON, and Excel files, uses a
+   headless browser for JS-rendered pages, extracts tables, and discovers links to
+   downloadable data files — all in one call. If it finds data file links, you can
+   call fetch_source again on the most relevant file URL.
+5. Verify discovered sources are accessible using check_url.
+6. Return each discovered source using format_discovery_result.
 
 DATA SOURCE PRIORITIES (prefer in this order):
 - Official APIs (Statistics Canada, CMHC, Ontario Open Data)

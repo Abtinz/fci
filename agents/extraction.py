@@ -7,8 +7,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
 from agents.llm import get_llm
-from tools.crawler import fetch_page, fetch_tables
-from tools.download import download_xlsx, download_csv, download_file
+from tools.crawler import fetch_source
 from prompts.extraction import SYSTEM, TASK
 from schema.graph import PipelineState
 
@@ -41,7 +40,7 @@ def format_extraction_result(
     })
 
 
-TOOLS = [fetch_page, fetch_tables, download_xlsx, download_csv, download_file, format_extraction_result]
+TOOLS = [fetch_source, format_extraction_result]
 
 
 def create_extraction_agent():

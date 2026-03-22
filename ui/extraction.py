@@ -10,8 +10,7 @@ from langgraph.prebuilt import create_react_agent
 from agents.llm import get_llm
 from prompts.extraction import SYSTEM, TASK
 from schema.graph import PipelineState
-from tools.crawler import fetch_page, fetch_tables
-from tools.download import download_csv, download_file, download_xlsx
+from tools.crawler import fetch_source
 from storage.source_store import (
     get_cached_source_content,
     list_discovered_sources,
@@ -149,23 +148,7 @@ def save_cache_entry(
 
 
 def fetch_source_content_for_cache(url: str, source_type: str) -> str:
-    source_type = (source_type or "html").lower()
-
-    if source_type == "xlsx":
-        content = download_xlsx.invoke({"url": url})
-    elif source_type == "csv":
-        content = download_csv.invoke({"url": url})
-    elif source_type == "api":
-        content = fetch_page.invoke({"url": url})
-    elif source_type == "pdf":
-        content = download_file.invoke({"url": url})
-    else:
-        page_text = fetch_page.invoke({"url": url})
-        tables_text = fetch_tables.invoke({"url": url})
-        if tables_text and not tables_text.startswith("No tables found"):
-            content = f"{page_text}\n\n{tables_text}"
-        else:
-            content = page_text
+    content = fetch_source.invoke({"url": url})
 
     if not content or not str(content).strip():
         raise RuntimeError("Crawler returned empty content.")

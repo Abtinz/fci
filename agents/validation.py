@@ -6,8 +6,7 @@ from datetime import datetime
 
 from schema.graph import PipelineState
 from tools.playwright_checker import check_source_with_playwright
-from tools.download import download_xlsx, download_csv
-from tools.crawler import fetch_page
+from tools.crawler import fetch_source
 
 MAX_RETRIES = 3
 
@@ -31,22 +30,9 @@ FILE_EXTENSIONS = {
 
 
 def _fetch_source_content(url: str) -> str | None:
-    """Fetch content from a source URL using the appropriate tool."""
-    url_path = url.split("?")[0].lower()
-
-    for ext, kind in FILE_EXTENSIONS.items():
-        if url_path.endswith(ext):
-            try:
-                if kind == "xlsx":
-                    return download_xlsx.invoke({"url": url})
-                elif kind == "csv":
-                    return download_csv.invoke({"url": url})
-            except Exception as e:
-                return f"Error: {e}"
-
-    # Default: treat as HTML page
+    """Fetch content from a source URL using the smart fetcher."""
     try:
-        return fetch_page.invoke({"url": url})
+        return fetch_source.invoke({"url": url})
     except Exception as e:
         return f"Error: {e}"
 
