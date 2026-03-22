@@ -13,6 +13,45 @@ from schema.state import Initiative
 load_dotenv()
 
 
+DEFAULT_SECTION_INITIATIVES = [
+    {
+        "initiative_id": "housing-4",
+        "category": "Housing",
+        "name": "Rental vacancy rate",
+        "metric_label": "Rental vacancy rate",
+        "target_value": "3%",
+    },
+    {
+        "initiative_id": "transportation-1",
+        "category": "Transportation",
+        "name": "Transit ridership",
+        "metric_label": "Annual transit ridership",
+        "target_value": "Increase year over year",
+    },
+    {
+        "initiative_id": "healthcare-1",
+        "category": "Healthcare",
+        "name": "Emergency department wait times",
+        "metric_label": "Median emergency department wait time",
+        "target_value": "Decrease wait times",
+    },
+    {
+        "initiative_id": "employment-1",
+        "category": "Employment & Jobs",
+        "name": "Unemployment rate",
+        "metric_label": "Unemployment rate",
+        "target_value": "Below provincial average",
+    },
+    {
+        "initiative_id": "placemaking-1",
+        "category": "placemaking & livability",
+        "name": "Licensed childcare spaces",
+        "metric_label": "Number of licensed childcare spaces",
+        "target_value": "Increase supply",
+    },
+]
+
+
 def build_discovery_state(
     initiative_id: str,
     category: str,
@@ -60,3 +99,21 @@ def run_discovery_step(
 
         runner = run_discovery
     return runner(state)
+
+
+def run_discovery_batch(
+    initiatives: list[dict[str, str]] | None = None,
+    runner: Callable[[PipelineState], PipelineState] | None = None,
+) -> list[PipelineState]:
+    batch = initiatives or DEFAULT_SECTION_INITIATIVES
+    return [
+        run_discovery_step(
+            initiative_id=item["initiative_id"],
+            category=item["category"],
+            name=item["name"],
+            metric_label=item["metric_label"],
+            target_value=item["target_value"],
+            runner=runner,
+        )
+        for item in batch
+    ]
