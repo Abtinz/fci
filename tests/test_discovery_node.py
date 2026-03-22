@@ -48,8 +48,9 @@ def build_state(**overrides):
 
 
 class DiscoveryToolTests(unittest.TestCase):
-    @patch("agents.discovery.PREDEFINED_SOURCES", {"housing-4": {"url": "https://cmhc.example/x.xlsx"}})
-    def test_lookup_predefined_returns_json_when_source_exists(self):
+    @patch("agents.discovery.get_predefined_sources")
+    def test_lookup_predefined_returns_json_when_source_exists(self, mock_get_predefined_sources):
+        mock_get_predefined_sources.return_value = [{"url": "https://cmhc.example/x.xlsx"}]
         result = lookup_predefined.invoke({"initiative_id": "housing-4"})
 
         self.assertEqual(
@@ -57,8 +58,9 @@ class DiscoveryToolTests(unittest.TestCase):
             {"url": "https://cmhc.example/x.xlsx"},
         )
 
-    @patch("agents.discovery.PREDEFINED_SOURCES", {})
-    def test_lookup_predefined_returns_message_when_missing(self):
+    @patch("agents.discovery.get_predefined_sources")
+    def test_lookup_predefined_returns_message_when_missing(self, mock_get_predefined_sources):
+        mock_get_predefined_sources.return_value = []
         result = lookup_predefined.invoke({"initiative_id": "housing-4"})
 
         self.assertEqual(result, "No predefined source for housing-4")
@@ -84,7 +86,9 @@ class DiscoveryToolTests(unittest.TestCase):
 
 class DiscoveryNodeTests(unittest.TestCase):
     @patch("agents.discovery.create_discovery_agent")
-    def test_run_discovery_parses_single_source_object(self, mock_create_agent):
+    @patch("agents.discovery.save_discovered_sources")
+    def test_run_discovery_parses_single_source_object(self, mock_save_sources, mock_create_agent):
+        mock_save_sources.return_value = 1
         agent = FakeAgent(
             [
                 SimpleNamespace(content="not-json"),
@@ -113,9 +117,12 @@ class DiscoveryNodeTests(unittest.TestCase):
                 }
             ],
         )
+        mock_save_sources.assert_called_once()
 
     @patch("agents.discovery.create_discovery_agent")
-    def test_run_discovery_parses_list_of_sources(self, mock_create_agent):
+    @patch("agents.discovery.save_discovered_sources")
+    def test_run_discovery_parses_list_of_sources(self, mock_save_sources, mock_create_agent):
+        mock_save_sources.return_value = 2
         agent = FakeAgent(
             [
                 SimpleNamespace(
@@ -142,9 +149,11 @@ class DiscoveryNodeTests(unittest.TestCase):
 
         self.assertEqual(len(result["sources"]), 2)
         self.assertEqual(result["sources"][1]["source_type"], "xlsx")
+        mock_save_sources.assert_called_once()
 
     @patch("agents.discovery.create_discovery_agent")
-    def test_run_discovery_returns_empty_sources_when_no_json_payload_found(self, mock_create_agent):
+    @patch("agents.discovery.save_discovered_sources")
+    def test_run_discovery_returns_empty_sources_when_no_json_payload_found(self, mock_save_sources, mock_create_agent):
         agent = FakeAgent(
             [
                 SimpleNamespace(content="plain text"),
@@ -157,9 +166,12 @@ class DiscoveryNodeTests(unittest.TestCase):
         result = run_discovery(build_state())
 
         self.assertEqual(result["sources"], [])
+        mock_save_sources.assert_not_called()
 
     @patch("agents.discovery.create_discovery_agent")
-    def test_run_discovery_includes_retry_context_in_prompt(self, mock_create_agent):
+    @patch("agents.discovery.save_discovered_sources")
+    def test_run_discovery_includes_retry_context_in_prompt(self, mock_save_sources, mock_create_agent):
+        mock_save_sources.return_value = 1
         agent = FakeAgent(
             [
                 SimpleNamespace(
@@ -186,6 +198,7 @@ class DiscoveryNodeTests(unittest.TestCase):
         self.assertIn("No data extracted", sent_task)
         self.assertIn("Empty raw_value", sent_task)
         self.assertIn("Initiative ID: housing-4", sent_task)
+        mock_save_sources.assert_called_once()
 
     @patch("agents.discovery.create_react_agent")
     @patch("agents.discovery.get_llm")

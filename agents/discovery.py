@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
 from agents.llm import get_llm
-from data.sources import PREDEFINED_SOURCES
 from tools.search import tavily_search, tavily_extract
 from tools.crawler import check_url
-from prompts.discovery import SYSTEM, TASK
+from prompts.discovery import TASK, build_system_prompt
 from schema.graph import PipelineState
+from storage.source_store import get_predefined_sources, save_discovered_sources
 
 # ── Colors ───────────────────────────────────────────────────────────────────
 G = "\033[32m"; Y = "\033[33m"; R = "\033[31m"
@@ -25,8 +26,11 @@ def lookup_predefined(initiative_id: str) -> str:
     """Look up a predefined data source for an initiative ID.
     Use this first before searching the web. Returns source details if found.
     """
-    if initiative_id in PREDEFINED_SOURCES:
-        return json.dumps(PREDEFINED_SOURCES[initiative_id], indent=2)
+    sources = get_predefined_sources(initiative_id)
+    if sources:
+        if len(sources) == 1:
+            return json.dumps(sources[0], indent=2, default=str)
+        return json.dumps(sources, indent=2, default=str)
     return f"No predefined source for {initiative_id}"
 
 
@@ -48,8 +52,9 @@ def format_discovery_result(url: str, source_type: str, description: str) -> str
 TOOLS = [lookup_predefined, tavily_search, tavily_extract, check_url, format_discovery_result]
 
 
-def create_discovery_agent():
-    return create_react_agent(get_llm(), TOOLS, prompt=SYSTEM)
+def create_discovery_agent(current_date: str | None = None):
+    prompt = build_system_prompt(current_date or date.today().isoformat())
+    return create_react_agent(get_llm(), TOOLS, prompt=prompt)
 
 
 # ── Node function for orchestrator ──────────────────────────────────────────
@@ -92,5 +97,13 @@ def run_discovery(state: PipelineState) -> PipelineState:
 
     if not sources:
         print(f"  {R}no sources found{RESET}")
+    else:
+        saved = save_discovered_sources(
+            initiative=init,
+            sources=sources,
+            retry_count=retry,
+        )
+        if saved:
+            print(f"  {DIM}saved {saved} source(s) to MongoDB{RESET}")
 
     return {**state, "sources": sources}

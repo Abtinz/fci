@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any
 
 from dotenv import load_dotenv
 
 from schema.graph import PipelineState
 from schema.state import Initiative
+from storage.source_store import (
+    get_mongo_status,
+    list_discovered_sources,
+    list_human_predefined_sources,
+    mongo_configured,
+    upsert_human_predefined_source,
+)
 
 
 load_dotenv()
@@ -117,3 +125,102 @@ def run_discovery_batch(
         )
         for item in batch
     ]
+
+
+def build_tavily_query(category: str, name: str, metric_label: str) -> str:
+    return (
+        f"{metric_label} {name} {category} Waterloo Region "
+        "Kitchener Cambridge Waterloo Ontario Canada data source"
+    )
+
+
+def run_tavily_only_search(
+    initiative_id: str,
+    category: str,
+    name: str,
+    metric_label: str,
+    target_value: str,
+    search_fn: Callable[[str, int], list[dict[str, Any]]] | None = None,
+    max_results: int = 5,
+) -> dict[str, Any]:
+    if search_fn is None:
+        from tools.search import search_candidate_sources
+
+        search_fn = search_candidate_sources
+
+    query = build_tavily_query(category=category, name=name, metric_label=metric_label)
+    candidates = search_fn(query, max_results)
+    return {
+        "initiative": {
+            "id": initiative_id,
+            "category": category,
+            "name": name,
+            "metric_label": metric_label,
+            "target_value": target_value,
+        },
+        "query": query,
+        "source_count": len(candidates),
+        "sources": candidates,
+        "used_predefined_sources": False,
+    }
+
+
+def run_tavily_only_batch(
+    initiatives: list[dict[str, str]] | None = None,
+    search_fn: Callable[[str, int], list[dict[str, Any]]] | None = None,
+    max_results: int = 5,
+) -> list[dict[str, Any]]:
+    batch = initiatives or DEFAULT_SECTION_INITIATIVES
+    return [
+        run_tavily_only_search(
+            initiative_id=item["initiative_id"],
+            category=item["category"],
+            name=item["name"],
+            metric_label=item["metric_label"],
+            target_value=item["target_value"],
+            search_fn=search_fn,
+            max_results=max_results,
+        )
+        for item in batch
+    ]
+
+
+def get_discovered_sources(initiative_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
+    return list_discovered_sources(initiative_id=initiative_id, limit=limit)
+
+
+def get_human_predefined_sources(initiative_id: str | None = None) -> list[dict[str, Any]]:
+    return list_human_predefined_sources(initiative_id=initiative_id)
+
+
+def save_human_predefined_source(
+    *,
+    initiative_id: str,
+    category: str,
+    name: str,
+    metric_label: str,
+    target_value: str,
+    url: str,
+    source_type: str,
+    description: str,
+    notes: str = "",
+) -> dict[str, Any]:
+    return upsert_human_predefined_source(
+        initiative_id=initiative_id,
+        category=category,
+        name=name,
+        metric_label=metric_label,
+        target_value=target_value,
+        url=url,
+        source_type=source_type,
+        description=description,
+        notes=notes,
+    )
+
+
+def is_mongo_configured() -> bool:
+    return mongo_configured()
+
+
+def get_mongo_connection_status() -> tuple[bool, str]:
+    return get_mongo_status()
