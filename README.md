@@ -1,121 +1,112 @@
 # Vision One Million Scorecard
 
-Automated data collection for the Waterloo Region's Vision One Million Scorecard using a LangGraph multi-agent pipeline.
+Automated data collection for the Waterloo Region Vision One Million Scorecard using a LangGraph multi-agent pipeline, a FastAPI backend, a Streamlit testing UI, and MongoDB storage.
 
-This project was built for the **FCI x GKWCC Winter 2026 Hackathon** at the University of Waterloo. The goal is to replace a manual, twice-yearly research workflow with an agent system that can discover public data sources, extract the right metric, validate the result, assess initiative status, and produce an updated scorecard JSON.
+## Stack
 
-## Why This Exists
+- `fastapi`: API service for discovery runs and source management
+- `streamlit`: workflow UI for step-by-step testing
+- `mongodb`: storage for discovered sources and human-defined predefined sources
 
-The Vision One Million Scorecard tracks regional readiness across five sectors:
+## What It Does
 
-- Housing
-- Transportation
-- Healthcare
-- Employment
-- Placemaking
+The pipeline is designed to:
 
-Each initiative has a metric, a target, and a status:
+1. discover public data sources for scorecard initiatives
+2. extract metrics from those sources
+3. validate extracted values
+4. map results to scorecard statuses
+5. persist source knowledge for reuse
 
-- `ACHIEVED`
-- `ON_TRACK`
-- `IN_PROGRESS`
-- `NEEDS_ATTENTION`
-- `NO_ASSESSMENT`
+Discovery now supports both:
 
-Historically, updating the scorecard meant manually visiting websites, reading reports, downloading spreadsheets, and copying values into a summary document. This codebase turns that workflow into a repeatable pipeline.
+- predefined sources from static config and human-in-the-loop Mongo entries
+- dynamic Tavily-based discovery
 
-## What The Pipeline Does
+## Services
 
-For each initiative, the system:
+### FastAPI
 
-1. Finds the best public data source.
-2. Fetches and extracts the metric from HTML, CSV, XLSX, PDF, or API-style sources.
-3. Validates that the extracted value is usable.
-4. Compares the metric against the initiative target.
-5. Produces a machine-readable result with status and reasoning.
+Main app:
 
-The graph flow is:
+- [api/main.py](/Users/abtinzandi/Desktop/fci/api/main.py)
 
-```text
-discovery -> extraction -> validation --(pass)--> mapper -> reporter -> END
-                                      \--(fail, retry<3)--> discovery
-                                      \--(exhausted)------> exhausted -> END
-```
+Useful endpoints:
 
-## Architecture
+- `GET /health`
+- `GET /sections`
+- `POST /discovery/run`
+- `POST /discovery/all-sections`
+- `POST /discovery/tavily-only`
+- `POST /discovery/tavily-only/all-sections`
+- `GET /sources/discovered`
+- `GET /sources/predefined`
+- `POST /sources/predefined`
 
-### Agents
-
-- `agents/discovery.py`
-  Finds candidate sources using predefined mappings first, then web search.
-- `agents/extraction.py`
-  Pulls source content and extracts the metric value and context.
-- `agents/validation.py`
-  Deterministic validation with retry handling.
-- `agents/mapper.py`
-  Assigns a scorecard status based on extracted data and target value.
-- `agents/reporter.py`
-  Produces the final narrative summary for the run.
-- `agents/orchestrator.py`
-  Wires the full LangGraph pipeline together.
-- `agents/llm.py`
-  Central OpenAI model configuration.
-
-### Tools
-
-- `tools/search.py`
-  Tavily search and extract helpers.
-- `tools/crawler.py`
-  URL checks, page fetches, and table scraping.
-- `tools/download.py`
-  File download helpers for structured sources.
-- `tools/parser.py`
-  Numeric parsing and target comparison utilities.
-
-### Schema
-
-- `schema/state.py`
-  Pydantic models for initiatives, sources, extracted values, and results.
-- `schema/graph.py`
-  The LangGraph pipeline state definition.
-
-### Prompts
-
-- `prompts/discovery.py`
-- `prompts/extraction.py`
-- `prompts/mapper.py`
-- `prompts/reporter.py`
-
-## Repository Layout
+Default URL:
 
 ```text
-.
-├── agents/
-├── prompts/
-├── schema/
-├── tools/
-├── .env.example
-├── pyproject.toml
-├── run.py
-├── run.sh
-├── README.md
-└── uv.lock
+http://localhost:8000
 ```
 
-## Tech Stack
+### Streamlit
 
-- Python 3.12+
-- `uv` for dependency management
-- LangGraph + LangChain
-- OpenAI models for agent reasoning
-- Tavily for web discovery
-- `httpx` + Beautiful Soup for scraping
-- `openpyxl` for spreadsheet parsing
-- Pydantic for structured state
+Main app:
 
-## Environment Variables
+- [streamlit_app.py](/Users/abtinzandi/Desktop/fci/streamlit_app.py)
 
-Create `.env` from `.env.example` and fill in:
+Pages:
+
+- `Discovery Agent`
+- `All Sections Discovery`
+- `Tavily-Only Discovery`
+- `Discovered Sources Store`
+- `Predefined Sources Manager`
+
+Default URL:
+
+```text
+http://localhost:8501
+```
+
+### MongoDB
+
+Mongo stores:
+
+- discovered sources returned by discovery
+- human-reviewed predefined sources
+
+## Docker Run
+
+Start the full stack:
+
+```bash
+docker compose up --build
+```
+
+Run in background:
+
+```bash
+docker compose up --build -d
+```
+
+Stop the stack:
+
+```bash
+docker compose down
+```
+
+The compose file is:
+
+- [docker-compose.yml](/Users/abtinzandi/Desktop/fci/docker-compose.yml)
+
+The shared image build is:
+
+- [Dockerfile](/Users/abtinzandi/Desktop/fci/Dockerfile)
+
+## Environment
+
+Create `.env` from `.env.example` and fill in your API keys:
 
 ```env
 OPENAI_API_KEY=...
@@ -123,114 +114,45 @@ TAVILY_API_KEY=...
 LANGSMITH_API_KEY=...
 LANGSMITH_TRACING=true
 LANGSMITH_PROJECT=vision-1m-scorecard
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB=vision_1m
 ```
 
-Notes:
+Inside Docker Compose, the application services automatically use:
 
-- `OPENAI_API_KEY` is required.
-- `TAVILY_API_KEY` is required for discovery via web search.
-- LangSmith variables are optional unless you want tracing.
-
-## Quick Start
-
-### 1. Install dependencies
-
-```bash
-uv sync
+```env
+MONGODB_URI=mongodb://mongodb:27017
 ```
 
-### 2. Create local env file
+so you do not need to change the compose file.
+
+## Local Scripts
+
+If you want to run pieces locally outside Docker:
 
 ```bash
-cp .env.example .env
-```
-
-### 3. Run one initiative
-
-```bash
+./run_api.sh
+./run_streamlit.sh
 ./run.sh --single housing-4
+./test_discovery.sh
 ```
 
-### 4. Run the full pipeline
+## Source Storage
 
-```bash
-./run.sh
-```
+Storage helpers:
 
-Equivalent direct command:
+- [storage/source_store.py](/Users/abtinzandi/Desktop/fci/storage/source_store.py)
 
-```bash
-uv run python run.py --single housing-4
-```
+Behavior:
 
-## Shell Runner
+- discovery reads predefined sources from both static config and MongoDB
+- discovery writes discovered sources into MongoDB
+- Streamlit can review discovered source records
+- Streamlit can add human-reviewed predefined sources
 
-This repo includes a small wrapper script:
+## Current Notes
 
-```bash
-./run.sh [args]
-```
-
-Examples:
-
-```bash
-./run.sh --single housing-4
-./run.sh
-```
-
-## Output
-
-- Single-initiative runs print the final pipeline state to stdout.
-- Full runs write `scorecard_output.json` in the project root.
-
-## Current Status
-
-This implementation is designed around the hackathon flow and has already been proven on at least one end-to-end initiative flow: `housing-4` using a CMHC XLSX source and mapping the result to `ACHIEVED`.
-
-## Important Repo Snapshot Notes
-
-This checked-in repo is not fully self-contained yet.
-
-- `run.py` expects an `output.json` file in the project root, but that file is not present in this snapshot.
-- `agents/discovery.py` imports `data.sources`, but the `data/` package is not present in this snapshot.
-- The original project description references assets like `BestWR.pdf`, `system-design.html`, and `fci.docx`, but they are not present here.
-
-That means the documented pipeline architecture is in place, but a fresh clone of this exact snapshot will still need those missing project files restored before the full pipeline can run successfully.
-
-## Design Choices
-
-- Predefined sources are intended to be checked before live search.
-- Validation is deterministic and can trigger up to three retries.
-- Failed retries degrade to `NO_ASSESSMENT` instead of crashing the whole scorecard build.
-- Agent responsibilities are separated cleanly so each stage can be tested in isolation.
-- The project uses `uv`, not `pip`, as the default package workflow.
-
-## Known Limitations
-
-- Some scorecard metrics are easier to automate than others.
-- Qualitative milestones may still require manual review or more specialized scraping.
-- Running all initiatives can create a high number of HTTP requests and LLM calls.
-- Source quality matters: landing pages are less reliable than direct CSV/XLSX/API endpoints.
-
-## What To Build Next
-
-- Restore or recreate `data/sources.py` with initiative-to-source mappings.
-- Add the missing `output.json` input file to the repository.
-- Expand predefined coverage for more initiatives.
-- Replace landing pages with direct machine-readable source URLs where possible.
-- Add historical snapshots and diff-based alerting.
-- Add a dashboard layer on top of the generated scorecard output.
-
-## Run Commands
-
-Single initiative:
-
-```bash
-./run.sh --single housing-4
-```
-
-All initiatives:
-
-```bash
-./run.sh
-```
+- the FastAPI and Streamlit services are containerized
+- Mongo-backed pages fail gracefully if Mongo is unreachable
+- the pipeline still expects initiative input data such as `output.json` for full scorecard runs
+- the repository is currently strongest around the discovery stage and source-management workflow

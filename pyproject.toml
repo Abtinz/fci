@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.14.3",
+    "fastapi>=0.116.1",
     "httpx>=0.28.1",
     "langchain>=1.2.13",
     "langchain-openai>=1.1.11",
@@ -18,4 +19,5 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "streamlit>=1.44.1",
     "tavily-python>=0.7.23",
+    "uvicorn>=0.35.0",
 ]

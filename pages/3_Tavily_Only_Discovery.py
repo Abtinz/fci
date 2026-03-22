@@ -35,7 +35,7 @@ if mode == "Single metric":
         metric_label = st.text_input("Metric", value="Rental vacancy rate")
         target_value = st.text_input("Target", value="3%")
         max_results = st.slider("Candidate sources", min_value=5, max_value=10, value=5, step=1)
-        run_single = st.button("Run Tavily-Only Test", type="primary", use_container_width=True)
+        run_single = st.button("Run Tavily-Only Test", type="primary", width="stretch")
 
     with right:
         st.subheader("What This Does")
@@ -74,9 +74,9 @@ if mode == "Single metric":
                 st.code(json.dumps(result, indent=2, default=str), language="json")
 else:
     st.subheader("Batch Scope")
-    st.dataframe(DEFAULT_SECTION_INITIATIVES, use_container_width=True, hide_index=True)
+    st.dataframe(DEFAULT_SECTION_INITIATIVES, width="stretch", hide_index=True)
     max_results = st.slider("Candidate sources per section", min_value=5, max_value=10, value=5, step=1)
-    run_batch = st.button("Run Tavily-Only Search For All Sections", type="primary", use_container_width=True)
+    run_batch = st.button("Run Tavily-Only Search For All Sections", type="primary", width="stretch")
 
     if run_batch:
         with st.spinner("Running Tavily-only discovery for all sections..."):

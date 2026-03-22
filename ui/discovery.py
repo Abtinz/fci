@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from schema.graph import PipelineState
 from schema.state import Initiative
 from storage.source_store import (
+    get_mongo_status,
     list_discovered_sources,
     list_human_predefined_sources,
     mongo_configured,
@@ -219,3 +220,7 @@ def save_human_predefined_source(
 
 def is_mongo_configured() -> bool:
     return mongo_configured()
+
+
+def get_mongo_connection_status() -> tuple[bool, str]:
+    return get_mongo_status()

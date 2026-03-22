@@ -23,9 +23,9 @@ st.info(
 )
 
 st.subheader("Batch Scope")
-st.dataframe(DEFAULT_SECTION_INITIATIVES, use_container_width=True, hide_index=True)
+st.dataframe(DEFAULT_SECTION_INITIATIVES, width="stretch", hide_index=True)
 
-run_batch = st.button("Run Discovery For All Sections", type="primary", use_container_width=True)
+run_batch = st.button("Run Discovery For All Sections", type="primary", width="stretch")
 
 if run_batch:
     with st.spinner("Running discovery across all five sections..."):

@@ -24,12 +24,17 @@ def mongo_configured() -> bool:
 
 def _get_collection(name: str):
     from pymongo import MongoClient
+    from pymongo.errors import PyMongoError
 
     uri = os.getenv("MONGODB_URI")
     if not uri:
         raise RuntimeError("MONGODB_URI is not configured.")
     db_name = os.getenv("MONGODB_DB", DEFAULT_DB_NAME)
-    client = MongoClient(uri)
+    try:
+        client = MongoClient(uri, serverSelectionTimeoutMS=3000)
+        client.admin.command("ping")
+    except PyMongoError as exc:
+        raise RuntimeError(f"MongoDB is unreachable: {exc}") from exc
     return client[db_name][name]
 
 
@@ -60,8 +65,11 @@ def list_human_predefined_sources(initiative_id: str | None = None) -> list[dict
     if initiative_id:
         query["initiative_id"] = initiative_id
 
-    collection = _get_collection(PREDEFINED_COLLECTION)
-    docs = list(collection.find(query, {"_id": 0}).sort("updated_at", -1))
+    try:
+        collection = _get_collection(PREDEFINED_COLLECTION)
+        docs = list(collection.find(query, {"_id": 0}).sort("updated_at", -1))
+    except RuntimeError:
+        return []
     return [
         {
             "initiative_id": doc.get("initiative_id", ""),
@@ -186,6 +194,19 @@ def list_discovered_sources(
     if initiative_id:
         query["initiative_id"] = initiative_id
 
-    collection = _get_collection(DISCOVERED_COLLECTION)
-    docs = list(collection.find(query, {"_id": 0}).sort("discovered_at", -1).limit(limit))
+    try:
+        collection = _get_collection(DISCOVERED_COLLECTION)
+        docs = list(collection.find(query, {"_id": 0}).sort("discovered_at", -1).limit(limit))
+    except RuntimeError:
+        return []
     return docs
+
+
+def get_mongo_status() -> tuple[bool, str]:
+    if not mongo_configured():
+        return False, "MongoDB is not configured."
+    try:
+        _get_collection(PREDEFINED_COLLECTION)
+    except RuntimeError as exc:
+        return False, str(exc)
+    return True, "MongoDB is reachable."

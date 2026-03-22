@@ -24,7 +24,7 @@ with left:
     metric_label = st.text_input("Metric", value="Rental vacancy rate")
     target_value = st.text_input("Target", value="3%")
 
-    run_test = st.button("Run Discovery Test", type="primary", use_container_width=True)
+    run_test = st.button("Run Discovery Test", type="primary", width="stretch")
 
 with right:
     st.subheader("What This Runs")
