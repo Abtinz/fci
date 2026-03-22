@@ -9,6 +9,12 @@ from dotenv import load_dotenv
 
 from schema.graph import PipelineState
 from schema.state import Initiative
+from storage.source_store import (
+    list_discovered_sources,
+    list_human_predefined_sources,
+    mongo_configured,
+    upsert_human_predefined_source,
+)
 
 
 load_dotenv()
@@ -176,3 +182,40 @@ def run_tavily_only_batch(
         )
         for item in batch
     ]
+
+
+def get_discovered_sources(initiative_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
+    return list_discovered_sources(initiative_id=initiative_id, limit=limit)
+
+
+def get_human_predefined_sources(initiative_id: str | None = None) -> list[dict[str, Any]]:
+    return list_human_predefined_sources(initiative_id=initiative_id)
+
+
+def save_human_predefined_source(
+    *,
+    initiative_id: str,
+    category: str,
+    name: str,
+    metric_label: str,
+    target_value: str,
+    url: str,
+    source_type: str,
+    description: str,
+    notes: str = "",
+) -> dict[str, Any]:
+    return upsert_human_predefined_source(
+        initiative_id=initiative_id,
+        category=category,
+        name=name,
+        metric_label=metric_label,
+        target_value=target_value,
+        url=url,
+        source_type=source_type,
+        description=description,
+        notes=notes,
+    )
+
+
+def is_mongo_configured() -> bool:
+    return mongo_configured()
