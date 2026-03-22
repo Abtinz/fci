@@ -9,9 +9,9 @@ import streamlit as st
 from ui.discovery import DEFAULT_SECTION_INITIATIVES, run_tavily_only_batch, run_tavily_only_search
 
 
-st.set_page_config(page_title="Tavily-Only Discovery", page_icon="V1M", layout="wide")
+st.set_page_config(page_title="Step 1 · Discovery (Tavily Only)", page_icon="V1M", layout="wide")
 
-st.title("Tavily-Only Discovery")
+st.title("Step 1 · Discovery (Tavily Only)")
 st.caption("Bypass predefined sources and test whether Tavily alone can surface candidate sources.")
 
 st.warning(

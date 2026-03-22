@@ -10,9 +10,9 @@ from ui.discovery import get_mongo_connection_status, is_mongo_configured
 from ui.extraction import audit_discovered_source_retrieval
 
 
-st.set_page_config(page_title="Source Retrieval Audit", page_icon="V1M", layout="wide")
+st.set_page_config(page_title="Step 3 · Source Retrieval Audit", page_icon="V1M", layout="wide")
 
-st.title("Source Retrieval Audit")
+st.title("Step 3 · Source Retrieval Audit")
 st.caption("Test whether all discovered MongoDB sources can be retrieved and cached regardless of source type.")
 
 if not is_mongo_configured():

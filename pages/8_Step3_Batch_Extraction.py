@@ -10,9 +10,9 @@ from ui.discovery import get_mongo_connection_status, is_mongo_configured
 from ui.extraction import get_cached_sources, run_extraction_for_all_cached_sources
 
 
-st.set_page_config(page_title="Batch Extraction From Mongo", page_icon="V1M", layout="wide")
+st.set_page_config(page_title="Step 3 · Batch Extraction", page_icon="V1M", layout="wide")
 
-st.title("Batch Extraction From Mongo")
+st.title("Step 3 · Batch Extraction")
 st.caption("Read cached MongoDB source records and run the second agent across all of them.")
 
 if not is_mongo_configured():

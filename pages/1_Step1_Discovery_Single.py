@@ -9,9 +9,9 @@ import streamlit as st
 from ui.discovery import run_discovery_step
 
 
-st.set_page_config(page_title="Discovery Agent", page_icon="V1M", layout="wide")
+st.set_page_config(page_title="Step 1 · Discovery (Single)", page_icon="V1M", layout="wide")
 
-st.title("Discovery Agent")
+st.title("Step 1 · Discovery (Single)")
 st.caption("Run the discovery node by itself and inspect the found sources.")
 
 left, right = st.columns([1, 1])

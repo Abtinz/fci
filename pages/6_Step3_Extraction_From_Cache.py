@@ -16,9 +16,9 @@ from ui.extraction import (
 )
 
 
-st.set_page_config(page_title="Extraction From Cache", page_icon="V1M", layout="wide")
+st.set_page_config(page_title="Step 3 · Extraction (From Cache)", page_icon="V1M", layout="wide")
 
-st.title("Extraction From Cache")
+st.title("Step 3 · Extraction (From Cache)")
 st.caption("Run the second agent using source content cached in MongoDB instead of hitting live URLs.")
 
 if not is_mongo_configured():

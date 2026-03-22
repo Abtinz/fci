@@ -9,9 +9,9 @@ import streamlit as st
 from ui.discovery import DEFAULT_SECTION_INITIATIVES, run_discovery_batch
 
 
-st.set_page_config(page_title="All Sections Discovery", page_icon="V1M", layout="wide")
+st.set_page_config(page_title="Step 1 · Discovery (All Sections)", page_icon="V1M", layout="wide")
 
-st.title("Discovery Across All 5 Sections")
+st.title("Step 1 · Discovery (All Sections)")
 st.caption(
     "Run the discovery node once for each live BestWR scorecard section using representative initiatives."
 )

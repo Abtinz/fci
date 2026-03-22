@@ -7,9 +7,9 @@ import streamlit as st
 from ui.discovery import get_discovered_sources, get_mongo_connection_status, is_mongo_configured
 
 
-st.set_page_config(page_title="Discovered Sources Store", page_icon="V1M", layout="wide")
+st.set_page_config(page_title="Step 2 · Browse Discovered Sources", page_icon="V1M", layout="wide")
 
-st.title("Discovered Sources Store")
+st.title("Step 2 · Browse Discovered Sources")
 st.caption("Review source candidates persisted from discovery runs.")
 
 if not is_mongo_configured():

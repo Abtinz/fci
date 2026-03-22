@@ -13,9 +13,9 @@ from ui.discovery import (
 )
 
 
-st.set_page_config(page_title="Predefined Sources Manager", page_icon="V1M", layout="wide")
+st.set_page_config(page_title="Step 2 · Manage Predefined Sources", page_icon="V1M", layout="wide")
 
-st.title("Predefined Sources Manager")
+st.title("Step 2 · Manage Predefined Sources")
 st.caption("Add human-reviewed predefined sources that discovery can use before Tavily search.")
 
 if not is_mongo_configured():
