@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from ui.discovery import (
@@ -191,3 +194,28 @@ def extraction_from_cache_all(initiative_id: str | None = None, limit: int = 100
         initiative_id=initiative_id,
         limit=limit,
     )
+
+
+_report_cache: dict = {}
+
+
+@app.get("/report")
+def get_report(refresh: bool = False) -> dict:
+    from agents.report import generate_report
+    if not refresh and _report_cache.get("data"):
+        return _report_cache["data"]
+    report = generate_report()
+    _report_cache["data"] = report
+    return report
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard():
+    html_path = Path(__file__).parent.parent / "dashboard" / "index.html"
+    return HTMLResponse(html_path.read_text())
+
+
+@app.get("/pitch", response_class=HTMLResponse)
+def pitch():
+    html_path = Path(__file__).parent.parent / "dashboard" / "pitch.html"
+    return HTMLResponse(html_path.read_text())

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision One Million — Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #F5F5F3;
+            --surface: #FFFFFF;
+            --surface-alt: #FAFAF8;
+            --border: #E5E3DE;
+            --border-light: #EEECE8;
+            --text: #1A1918;
+            --text-2: #4A4844;
+            --text-3: #8A877F;
+            --green: #1B7A3D;
+            --green-bg: #E8F5ED;
+            --green-border: #C4E4CE;
+            --blue: #2563A8;
+            --blue-bg: #EBF1FA;
+            --blue-border: #C0D5ED;
+            --amber: #9B7A1C;
+            --amber-bg: #FBF6E8;
+            --amber-border: #E8DDB8;
+            --red: #B83A2A;
+            --red-bg: #FCEEED;
+            --red-border: #EACBC6;
+            --teal: #0E7490;
+            --teal-bg: #E8F6F8;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+        /* ── SHELL ── */
+        .shell { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: 56px 1fr; min-height: 100vh; }
+        .topbar {
+            grid-column: 1 / -1;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-logo {
+            width: 28px; height: 28px; border-radius: 7px;
+            background: linear-gradient(135deg, var(--blue), var(--green));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 11px; color: #fff;
+        }
+        .topbar-title { font-size: 14px; font-weight: 700; }
+        .topbar-title span { color: var(--text-3); font-weight: 400; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .topbar-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s ease infinite; }
+        @keyframes pulse { 50% { opacity: 0.4; } }
+        .btn {
+            padding: 6px 14px; border-radius: 7px; font-family: inherit; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+            transition: all 0.15s;
+        }
+        .btn:hover { background: var(--bg); }
+        .btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+        .btn-primary:hover { background: #1d52a0; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+        .nav-section {
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-3); padding: 16px 20px 6px;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 20px; font-size: 13px; color: var(--text-2);
+            cursor: pointer; transition: all 0.1s; border-left: 2px solid transparent;
+        }
+        .nav-item:hover { background: var(--bg); color: var(--text); }
+        .nav-item.active { background: var(--blue-bg); color: var(--blue); font-weight: 600; border-left-color: var(--blue); }
+        .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .nav-badge {
+            margin-left: auto; font-size: 10px; font-weight: 700; padding: 1px 6px;
+            border-radius: 100px; background: var(--red-bg); color: var(--red);
+        }
+
+        /* ── MAIN ── */
+        .main { padding: 24px; overflow-y: auto; }
+
+        /* ── ALERT BANNER ── */
+        .alerts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .alert {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 16px; border-radius: 8px; font-size: 13px;
+            border: 1px solid;
+        }
+        .alert svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .alert-red { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+        .alert-amber { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber); }
+        .alert-green { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+        .alert-blue { background: var(--blue-bg); border-color: var(--blue-border); color: var(--blue); }
+        .alert-text { flex: 1; }
+        .alert-text strong { font-weight: 600; }
+        .alert-dismiss { cursor: pointer; opacity: 0.5; transition: opacity 0.15s; }
+        .alert-dismiss:hover { opacity: 1; }
+
+        /* ── STATS ROW ── */
+        .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border-light);
+            border-radius: 10px; padding: 16px;
+        }
+        .stat-label { font-size: 11px; color: var(--text-3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+        .stat-num { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; line-height: 1; }
+        .stat-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+        /* ── CATEGORY STRIP ── */
+        .cat-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border-light); border: 1px solid var(--border-light); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+        .cat-cell {
+            background: var(--surface); padding: 16px; cursor: pointer;
+            transition: background 0.15s; text-align: center;
+        }
+        .cat-cell:hover { background: var(--surface-alt); }
+        .cat-cell.active { background: var(--blue-bg); }
+        .cat-cell-score { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+        .cat-cell-name { font-size: 12px; font-weight: 600; }
+        .cat-cell-sub { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+        .cat-cell-bar { height: 3px; background: var(--border-light); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+        .cat-cell-bar-fill { height: 100%; border-radius: 2px; }
+
+        /* ── PANELS GRID ── */
+        .panels { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+
+        /* ── INITIATIVE TABLE ── */
+        .panel { background: var(--surface); border: 1px solid var(--border-light); border-radius: 10px; overflow: hidden; }
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; border-bottom: 1px solid var(--border-light);
+        }
+        .panel-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-3); }
+        .panel-body { padding: 0; }
+
+        .init-row {
+            display: grid; grid-template-columns: 1fr 140px 100px 60px;
+            align-items: center; gap: 8px;
+            padding: 10px 16px; border-bottom: 1px solid var(--border-light);
+            cursor: pointer; transition: background 0.1s;
+        }
+        .init-row:last-child { border-bottom: none; }
+        .init-row:hover { background: var(--surface-alt); }
+        .init-name { font-size: 13px; font-weight: 600; }
+        .init-metric { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+        .init-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-2); text-align: right; }
+        .badge {
+            font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+            padding: 3px 8px; border-radius: 100px; text-align: center; white-space: nowrap;
+        }
+        .badge-achieved { background: var(--green-bg); color: var(--green); }
+        .badge-on-track { background: var(--blue-bg); color: var(--blue); }
+        .badge-in-progress { background: var(--amber-bg); color: var(--amber); }
+        .badge-needs-attention { background: var(--red-bg); color: var(--red); }
+        .badge-no-data { background: var(--bg); color: var(--text-3); }
+        .init-src { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-3); text-align: right; }
+
+        /* ── DETAIL EXPAND ── */
+        .init-detail {
+            display: none; padding: 12px 16px 16px; background: var(--surface-alt);
+            border-bottom: 1px solid var(--border-light);
+        }
+        .init-detail.open { display: block; }
+        .detail-text { font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 10px; }
+        .detail-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+        .pill {
+            font-size: 11px; padding: 6px 10px; border-radius: 6px;
+            background: var(--surface); border: 1px solid var(--border-light);
+        }
+        .pill-highlight { border-left: 3px solid var(--blue); }
+
+        /* ── RIGHT SIDEBAR PANELS ── */
+        .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+        /* Alert feed */
+        .alert-feed-item {
+            display: flex; gap: 10px; padding: 10px 16px;
+            border-bottom: 1px solid var(--border-light); font-size: 12px;
+        }
+        .alert-feed-item:last-child { border-bottom: none; }
+        .alert-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 3px; flex-shrink: 0; }
+        .alert-feed-text { flex: 1; color: var(--text-2); line-height: 1.4; }
+        .alert-feed-text strong { color: var(--text); font-weight: 600; }
+        .alert-feed-time { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+        /* Source quality */
+        .quality-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 16px; border-bottom: 1px solid var(--border-light);
+        }
+        .quality-row:last-child { border-bottom: none; }
+        .quality-bar-track { flex: 1; height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; }
+        .quality-bar-fill { height: 100%; border-radius: 3px; }
+        .quality-label { font-size: 11px; font-weight: 600; min-width: 50px; }
+        .quality-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-3); min-width: 30px; text-align: right; }
+
+        /* ── LOADING ── */
+        .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; }
+        .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1024px) {
+            .shell { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .panels { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(3, 1fr); }
+            .cat-strip { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-logo">V1</div>
+            <div class="topbar-title">Vision One Million <span>/ dashboard</span></div>
+        </div>
+        <div class="topbar-right">
+            <button class="btn" onclick="loadDemo()">Demo</button>
+            <button class="btn btn-primary" onclick="loadLive()">Load Live</button>
+            <div class="topbar-status">
+                <div class="status-dot"></div>
+                <span id="topbar-status">Ready</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="nav-section">Overview</div>
+        <div class="nav-item active" onclick="scrollMain('top')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Dashboard
+        </div>
+        <div class="nav-item" onclick="scrollMain('alerts-section')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Alerts
+            <span class="nav-badge" id="alert-count">0</span>
+        </div>
+        <div class="nav-section">Categories</div>
+        <div id="sidebar-cats"></div>
+        <div class="nav-section" style="margin-top:16px;">Data</div>
+        <div class="nav-item" onclick="scrollMain('initiatives-panel')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M20 21H4"/></svg>
+            All Initiatives
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main" id="main-content">
+        <div class="loading" id="loading-state">
+            <div class="spinner"></div>
+            <div style="font-size:13px;color:var(--text-3);">Click "Demo" or "Load Live" to start</div>
+        </div>
+    </div>
+</div>
+
+<script>
+function scoreColor(s) { return s >= 70 ? 'var(--green)' : s >= 40 ? 'var(--amber)' : 'var(--red)'; }
+function scoreHex(s) { return s >= 70 ? '#1B7A3D' : s >= 40 ? '#9B7A1C' : '#B83A2A'; }
+function badgeCls(s) { return ({ ACHIEVED:'badge-achieved', ON_TRACK:'badge-on-track', IN_PROGRESS:'badge-in-progress', NEEDS_ATTENTION:'badge-needs-attention' })[s] || 'badge-no-data'; }
+function badgeLbl(s) { return ({ ACHIEVED:'Achieved', ON_TRACK:'On Track', IN_PROGRESS:'In Progress', NEEDS_ATTENTION:'Needs Attention' })[s] || 'No Data'; }
+function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+function catColor(id) { return ({ housing:'var(--blue)', transportation:'var(--green)', healthcare:'var(--red)', employment:'var(--amber)', livability:'var(--teal)' })[id] || 'var(--text-3)'; }
+
+function scrollMain(id) {
+    if (id === 'top') { document.getElementById('main-content').scrollTo({top:0,behavior:'smooth'}); return; }
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function buildAlerts(report) {
+    const alerts = [];
+    for (const init of report.initiatives) {
+        if (init.status === 'NEEDS_ATTENTION') alerts.push({ type:'red', icon:'!', text:`<strong>${esc(init.name)}</strong> needs attention — ${esc(init.value||'below target')}`, cat:init.category });
+        else if (init.status === 'ACHIEVED') alerts.push({ type:'green', icon:'✓', text:`<strong>${esc(init.name)}</strong> target achieved — ${esc(init.value||'')}`, cat:init.category });
+    }
+    // data quality alerts
+    const noData = report.initiatives.filter(i => i.status === 'NO_DATA');
+    if (noData.length > 0) alerts.push({ type:'amber', icon:'?', text:`<strong>${noData.length} initiative(s)</strong> have no data sources — discovery needed`, cat:'System' });
+    const lowSrc = report.initiatives.filter(i => i.source_count === 1 && i.status !== 'NO_DATA');
+    if (lowSrc.length > 0) alerts.push({ type:'blue', icon:'i', text:`<strong>${lowSrc.length} initiative(s)</strong> rely on a single source — consider adding more`, cat:'Quality' });
+    return alerts;
+}
+
+function render(report) {
+    const sc = report.status_counts;
+    const alerts = buildAlerts(report);
+    document.getElementById('alert-count').textContent = alerts.filter(a=>a.type==='red'||a.type==='amber').length;
+
+    // Sidebar cats
+    let sbHtml = '';
+    for (const cat of report.categories) {
+        sbHtml += `<div class="nav-item" onclick="scrollMain('cat-${cat.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+            ${esc(cat.name)}
+        </div>`;
+    }
+    document.getElementById('sidebar-cats').innerHTML = sbHtml;
+
+    let h = '<div id="top"></div>';
+
+    // ── ALERTS ──
+    if (alerts.length) {
+        h += `<div class="alerts" id="alerts-section">`;
+        for (let i = 0; i < Math.min(alerts.length, 4); i++) {
+            const a = alerts[i];
+            h += `<div class="alert alert-${a.type}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <div class="alert-text">${a.text}</div>
+                <div class="alert-dismiss" onclick="this.parentElement.remove()">✕</div>
+            </div>`;
+        }
+        h += `</div>`;
+    }
+
+    // ── STATS ROW ──
+    h += `<div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">Overall Score</div>
+            <div class="stat-num" style="color:${scoreColor(report.overall_score)}">${report.overall_score}</div>
+            <div class="stat-sub">out of 100</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Assessed</div>
+            <div class="stat-num">${report.total_assessed}</div>
+            <div class="stat-sub">of ${report.total_initiatives} initiatives</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Achieved</div>
+            <div class="stat-num" style="color:var(--green)">${sc.ACHIEVED||0}</div>
+            <div class="stat-sub">targets met</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">In Progress</div>
+            <div class="stat-num" style="color:var(--amber)">${(sc.ON_TRACK||0)+(sc.IN_PROGRESS||0)}</div>
+            <div class="stat-sub">active tracking</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Needs Attention</div>
+            <div class="stat-num" style="color:var(--red)">${sc.NEEDS_ATTENTION||0}</div>
+            <div class="stat-sub">below target</div>
+        </div>
+    </div>`;
+
+    // ── CATEGORY STRIP ──
+    h += `<div class="cat-strip">`;
+    for (const cat of report.categories) {
+        const c = scoreColor(cat.score);
+        h += `<div class="cat-cell" onclick="scrollMain('cat-${cat.id}')" id="cat-${cat.id}">
+            <div class="cat-cell-score" style="color:${c}">${cat.score}</div>
+            <div class="cat-cell-name">${esc(cat.name)}</div>
+            <div class="cat-cell-sub">${cat.assessed_count}/${cat.initiative_count} assessed</div>
+            <div class="cat-cell-bar"><div class="cat-cell-bar-fill" style="width:${cat.score}%;background:${c}"></div></div>
+        </div>`;
+    }
+    h += `</div>`;
+
+    // ── PANELS GRID ──
+    h += `<div class="panels">`;
+
+    // Left: Initiative table
+    h += `<div class="panel" id="initiatives-panel">
+        <div class="panel-header">
+            <div class="panel-title">Initiatives</div>
+            <div style="font-size:11px;color:var(--text-3)">${report.total_initiatives} total</div>
+        </div>
+        <div class="panel-body">`;
+
+    for (const cat of report.categories) {
+        for (let i = 0; i < cat.initiatives.length; i++) {
+            const init = cat.initiatives[i];
+            const pid = `detail-${cat.id}-${i}`;
+            h += `<div class="init-row" onclick="toggleDetail('${pid}')">
+                <div>
+                    <div class="init-name">${esc(init.name)}</div>
+                    <div class="init-metric">${esc(init.metric_label)}</div>
+                </div>
+                <div class="init-val">${esc(init.value||'—')}</div>
+                <div><span class="badge ${badgeCls(init.status)}">${badgeLbl(init.status)}</span></div>
+                <div class="init-src">${init.source_count}</div>
+            </div>
+            <div class="init-detail" id="${pid}">`;
+
+            if (init.reasoning) h += `<div class="detail-text">${esc(init.reasoning)}</div>`;
+            if (init.highlights && init.highlights.length) {
+                h += `<div class="detail-pills" style="margin-bottom:8px;">`;
+                for (const hl of init.highlights) h += `<div class="pill pill-highlight">${esc(hl)}</div>`;
+                h += `</div>`;
+            }
+            if (init.sources && init.sources.length) {
+                h += `<div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Sources</div><div class="detail-pills">`;
+                for (const src of init.sources) {
+                    const t = src.title || src.url.substring(0,35);
+                    h += `<a href="${esc(src.url)}" target="_blank" class="pill" style="text-decoration:none;color:var(--text-2);font-size:11px;">${esc(t.substring(0,35))}</a>`;
+                }
+                h += `</div>`;
+            }
+            h += `</div>`;
+        }
+    }
+    h += `</div></div>`;
+
+    // Right column
+    h += `<div class="right-col">`;
+
+    // Alert feed
+    h += `<div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Alert Feed</div>
+            <div style="font-size:11px;color:var(--text-3)">${alerts.length} alerts</div>
+        </div>
+        <div class="panel-body">`;
+    for (const a of alerts) {
+        const dotColor = a.type==='red'?'var(--red)':a.type==='amber'?'var(--amber)':a.type==='green'?'var(--green)':'var(--blue)';
+        h += `<div class="alert-feed-item">
+            <div class="alert-dot" style="background:${dotColor}"></div>
+            <div>
+                <div class="alert-feed-text">${a.text}</div>
+                <div class="alert-feed-time">${a.cat}</div>
+            </div>
+        </div>`;
+    }
+    if (!alerts.length) h += `<div style="padding:20px;text-align:center;font-size:12px;color:var(--text-3)">No alerts</div>`;
+    h += `</div></div>`;
+
+    // Source quality breakdown
+    h += `<div class="panel">
+        <div class="panel-header"><div class="panel-title">Category Health</div></div>
+        <div class="panel-body">`;
+    for (const cat of report.categories) {
+        const c = scoreHex(cat.score);
+        h += `<div class="quality-row">
+            <div class="quality-label">${esc(cat.name)}</div>
+            <div class="quality-bar-track"><div class="quality-bar-fill" style="width:${cat.score}%;background:${c}"></div></div>
+            <div class="quality-num">${cat.score}</div>
+        </div>`;
+    }
+    h += `</div></div>`;
+
+    // Status distribution
+    h += `<div class="panel">
+        <div class="panel-header"><div class="panel-title">Status Distribution</div></div>
+        <div class="panel-body" style="padding:16px;">`;
+    const statuses = [
+        { label:'Achieved', count:sc.ACHIEVED||0, color:'var(--green)' },
+        { label:'On Track', count:sc.ON_TRACK||0, color:'var(--blue)' },
+        { label:'In Progress', count:sc.IN_PROGRESS||0, color:'var(--amber)' },
+        { label:'Needs Attention', count:sc.NEEDS_ATTENTION||0, color:'var(--red)' },
+        { label:'No Data', count:sc.NO_DATA||0, color:'var(--text-3)' },
+    ];
+    const total = report.total_initiatives || 1;
+    // Stacked bar
+    h += `<div style="display:flex;height:24px;border-radius:6px;overflow:hidden;margin-bottom:12px;">`;
+    for (const s of statuses) {
+        if (s.count > 0) h += `<div style="width:${(s.count/total)*100}%;background:${s.color};" title="${s.label}: ${s.count}"></div>`;
+    }
+    h += `</div>`;
+    for (const s of statuses) {
+        h += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;">
+            <div style="width:8px;height:8px;border-radius:2px;background:${s.color};flex-shrink:0;"></div>
+            <span style="flex:1;color:var(--text-2)">${s.label}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text)">${s.count}</span>
+        </div>`;
+    }
+    h += `</div></div>`;
+
+    h += `</div>`; // right-col
+    h += `</div>`; // panels
+
+    document.getElementById('main-content').innerHTML = h;
+    document.getElementById('topbar-status').textContent = `${report.total_assessed} of ${report.total_initiatives} assessed`;
+}
+
+function toggleDetail(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('open');
+}
+
+function loadLive() {
+    document.getElementById('main-content').innerHTML = '<div class="loading"><div class="spinner"></div><div style="font-size:13px;color:var(--text-3)">Generating report from live data...</div></div>';
+    document.getElementById('topbar-status').textContent = 'Loading...';
+    fetch('/report')
+        .then(r => r.json())
+        .then(data => render(data))
+        .catch(err => {
+            document.getElementById('main-content').innerHTML = `<div class="loading"><div style="color:var(--red);font-size:13px;">Failed: ${err.message}</div></div>`;
+        });
+}
+
+function loadDemo() { render(generateDemoData()); }
+
+function generateDemoData() {
+    const cats = [
+        { id:'housing', name:'Housing', initiatives:[
+            { name:'Building the homes we need', metric:'Dwellings built', target:'80% completion of annual housing targets', status:'ACHIEVED', value:'105% (Kitchener) / 129% (Waterloo)', reasoning:'Both Kitchener and Waterloo exceeded their 2024 housing targets significantly.', highlights:['Kitchener: 3,067 units vs 2,917 target','Waterloo: 1,722 units vs 1,333 target','Province-wide 75.93% of 125,000 target reached'] },
+            { name:'Creating new affordable housing units', metric:'Community housing wait times', target:'Year over Year reduction', status:'NEEDS_ATTENTION', value:'28x waitlist-to-housed ratio', reasoning:'Community housing demand far exceeds supply with ~28x more households on waitlist than housed.', highlights:['2,350 new affordable units in development','$167M Building Faster Fund awarded','Wait times remain critically high'] },
+            { name:'Water and Wastewater', metric:'Servicing capacity', target:'Sufficient capacity for growth', status:'IN_PROGRESS', value:'4% increase in water use (2020-24)', reasoning:'Water demand grew 4% since 2020. Region initiated master plan update and requested temporary dev pause.', highlights:['Water Supply Master Plan update initiated','Temporary development pause requested','Increasing demand trends in 2025 report'] },
+            { name:'Balancing the rental housing market', metric:'Rental vacancy rate', target:'3% vacancy rate', status:'ACHIEVED', value:'3.1% vacancy rate (2025)', reasoning:'Purpose-built rental vacancy rate reached 3.1%, meeting the 3% target.', highlights:['Improved from 2.2% to 3.1% year-over-year','Average 2BR rent: $1,450/month','New rental construction at 10-year high'] },
+            { name:'Supporting unhoused populations', metric:'Chronic homelessness count', target:'Functional zero by 2030', status:'NEEDS_ATTENTION', value:'558 people (Feb 2024)', reasoning:'Chronic homelessness at 558, up 28% since 2020. 30-action plan approved but trajectory is concerning.', highlights:['28% increase since 2020','Council approved 30-action plan','PIT count conducted February 2024'] },
+        ]},
+        { id:'transportation', name:'Transportation', initiatives:[
+            { name:'Expanding Rail and Transit', metric:'Project milestones', target:'Completion of all projects', status:'IN_PROGRESS', value:'Stage 2 ION in design', reasoning:'King-Victoria Hub under construction, Stage 2 ION in detailed design, Breslau GO in planning.', highlights:['King-Victoria Hub completion 2025','Stage 2 ION EA completed','Breslau GO in early planning'] },
+            { name:'New Highway 7', metric:'Construction milestones', target:'Completion of expansion', status:'IN_PROGRESS', value:'Phase 1 ongoing', reasoning:'Phase 1 under construction, expected completion 2026. Phase 2 EA underway.', highlights:['Phase 1 completion: 2026','Phase 2 EA underway','Four-lane divided highway'] },
+            { name:"Expanding YKF Airport", metric:'Growth plan delivery', target:'Completion of growth phases', status:'ON_TRACK', value:'1.2M passengers (2024)', reasoning:'Passenger growth to 1.2M in 2024, terminal expansion approved, new routes added.', highlights:['Passengers up 18% from 2023','Terminal expansion Phase 1 approved','New routes to Calgary, Halifax, Montreal'] },
+            { name:'Increased Public Transit Use', metric:'Annual ridership', target:'26M rides per year', status:'IN_PROGRESS', value:'22.4M rides (2024)', reasoning:'Ridership recovered to 22.4M, up from 19.1M but below 26M target.', highlights:['Ridership up 17% YoY','ION LRT: 28,000 daily riders','New express routes launched'] },
+            { name:'Two-Way All-Day GO Service', metric:'Round-trip frequency', target:'Two-way, all-day service', status:'ON_TRACK', value:'18 weekday / 4 weekend', reasoning:'18 weekday round trips, approaching 20-trip target. Weekend target met.', highlights:['18/20 weekday trips achieved','Weekend target met at 4 trips','All-day service since Fall 2025'] },
+        ]},
+        { id:'healthcare', name:'Healthcare', initiatives:[
+            { name:'New Hospital', metric:'Planning milestones', target:'Phase 1 approvals', status:'IN_PROGRESS', value:'Stage 2 approved', reasoning:'Stage 2 planning approval received. Site selected in south Kitchener.', highlights:['Stage 2 approval received','Site: south Kitchener','Est. completion: 2032-2035'] },
+            { name:'Residents Connected to a Doctor', metric:'Physician attachment', target:'100% attachment', status:'NEEDS_ATTENTION', value:'85.2% attached', reasoning:'~88,000 residents without a family doctor. New NP clinics opened but gap remains.', highlights:['88,000 without family doctor','3 new NP-led clinics opened','Ontario Health Team expanding'] },
+            { name:'Supporting Older Adults', metric:'ALC rates', target:'Top-decile performance', status:'IN_PROGRESS', value:'14.2% ALC rate', reasoning:'ALC at 14.2% vs 12.8% provincial average. Community paramedicine expanded.', highlights:['ALC: 14.2% vs 12.8% avg','Community paramedicine expanded','128-bed LTC home approved'] },
+            { name:'ED Wait Times', metric:'Time to first assessment', target:'Provincial average (2h)', status:'NEEDS_ATTENTION', value:'2.8h median wait', reasoning:'Median ED wait 2.8h, above 2h target. Volumes up 8% YoY.', highlights:['2.8h vs 2.0h target','ED visits up 8% YoY','Virtual triage diverted 12,000 visits'] },
+            { name:'Ambulance Response Times', metric:'Response compliance', target:'Meet or exceed standards', status:'ON_TRACK', value:'91.3% compliance', reasoning:'91.3% compliance exceeds 90% standard. New Breslau station improved east-end times.', highlights:['91.3% exceeds 90% standard','Breslau station operational','Avg response: 7.2 min CTAS 1'] },
+            { name:'Mental Health Supports', metric:'Service wait times', target:'Year-over-year reduction', status:'IN_PROGRESS', value:'42-day avg wait', reasoning:'Wait times down from 48 to 42 days. 988 crisis line and mobile teams operational.', highlights:['Wait reduced: 48→42 days','988 crisis line since Nov 2024','3,200 mobile crisis responses'] },
+        ]},
+        { id:'employment', name:'Employment & Jobs', initiatives:[
+            { name:'Employment Lands', metric:'Serviced land availability', target:'Sufficient shovel-ready land', status:'IN_PROGRESS', value:'420 hectares available', reasoning:'420 hectares serviced, 180 in pipeline. Huron Business Park Phase 2 underway.', highlights:['420ha currently available','180ha in servicing pipeline','Huron Business Park Phase 2'] },
+            { name:'Shovel-Ready Mega Site', metric:'Site readiness', target:'Fully shovel-ready', status:'ON_TRACK', value:'EA complete', reasoning:'400-acre site EA completed. Servicing design awarded, readiness expected late 2027.', highlights:['400-acre site zoned','EA completed Q4 2025','Servicing design awarded'] },
+            { name:'Strong Regional Employment', metric:'Employment indicators', target:'5% unemployment / 70% participation', status:'ACHIEVED', value:'4.8% / 71.2%', reasoning:'Unemployment 4.8% below 5% target, participation 71.2% above 70% benchmark.', highlights:['Unemployment: 4.8%','Participation: 71.2%','Net +8,400 jobs in 2024'] },
+            { name:'Leading Tech Talent Region', metric:'Tech talent ranking', target:'Maintain national leadership', status:'ACHIEVED', value:'#2 in Canada (CBRE 2025)', reasoning:'Ranked #2 nationally. Tech workforce grew 6.2% YoY.', highlights:['#2 Canada (CBRE 2025)','Tech workforce +6.2% YoY','24,000 co-op placements'] },
+            { name:'Post-Secondary Investments', metric:'Per student funding', target:'Adequate capacity', status:'IN_PROGRESS', value:'$12,800/student', reasoning:'$12,800 per student below $14,500 national avg. New capital investments increasing capacity.', highlights:['$12,800 vs $14,500 national','UW Engineering 7 opened','Conestoga expansion approved'] },
+            { name:'Electrical Capacity', metric:'Energy capacity', target:'Capacity exceeds demand', status:'ON_TRACK', value:'1,850MW / 1,620MW peak', reasoning:'14% reserve margin. Grid modernization underway for EV and industrial growth.', highlights:['14% reserve margin','Grid modernization underway','230kV line approved for 2027'] },
+        ]},
+        { id:'livability', name:'Placemaking & Livability', initiatives:[
+            { name:'Tourism Capacity', metric:'Hotel inventory', target:'400 new hotel rooms', status:'ON_TRACK', value:'310 rooms opened', reasoning:'310 new rooms since 2023, 150 under construction. On track to exceed 400 by 2026.', highlights:['310 rooms (78% of target)','150 under construction','Marriott downtown Kitchener opened'] },
+            { name:'Increased School Spaces', metric:'Utilization rate', target:'80-100% utilization', status:'NEEDS_ATTENTION', value:'108% avg utilization', reasoning:'108% average utilization indicates overcrowding. 4 new schools approved for 2027-2029.', highlights:['108% utilization (overcrowded)','Portables up 22% since 2022','4 new schools by 2029'] },
+            { name:'Reducing GHG Emissions', metric:'Regional emissions', target:'Climate commitments', status:'IN_PROGRESS', value:'6.2% reduction since 2019', reasoning:'6.2% reduction from 2019, below pace for 30% by 2030. Transport is 42% of emissions.', highlights:['6.2% reduction from baseline','Transport: 42% of emissions','District energy expanded'] },
+            { name:'Ensuring Childcare for All', metric:'Licensed spaces', target:'4,136 new spaces', status:'IN_PROGRESS', value:'2,180 spaces created', reasoning:'2,180 of 4,136 target (53%). $10/day program increased demand 34%.', highlights:['2,180 of 4,136 target (53%)','Demand up 34% from $10/day','89% at capacity'] },
+            { name:'Creating a Safer Environment', metric:'Public safety', target:'Improved outcomes', status:'ON_TRACK', value:'12% reduction violent crime', reasoning:'Violent crime down 12% in 2024. Community safety hubs and crisis co-response expanded.', highlights:['Violent crime -12% YoY','3 community safety hubs','Crisis co-response expanded'] },
+            { name:'Increasing Social Infrastructure', metric:'Community capacity', target:'Scales with population', status:'IN_PROGRESS', value:'2,350 homes in development', reasoning:'Active projects but infrastructure growth lags 2.1% annual population growth.', highlights:['2,350 homes in development','New community centres planned','Population growing 2.1%/year'] },
+        ]},
+    ];
+
+    const statusMap = { ACHIEVED:100, ON_TRACK:80, IN_PROGRESS:60, NEEDS_ATTENTION:30, NO_DATA:0 };
+    const sc = { ACHIEVED:0, ON_TRACK:0, IN_PROGRESS:0, NEEDS_ATTENTION:0, NO_DATA:0 };
+    const allInits = [];
+    const categories = [];
+    let assessed = 0;
+
+    for (const cat of cats) {
+        const inits = []; const scores = [];
+        for (const init of cat.initiatives) {
+            sc[init.status]++; assessed++; scores.push(statusMap[init.status]);
+            inits.push({
+                id: cat.id+'-'+(cat.initiatives.indexOf(init)+1), name:init.name, category:cat.name,
+                metric_label:init.metric, target_value:init.target, status:init.status,
+                status_label:badgeLbl(init.status), status_color:'', value:init.value,
+                reasoning:init.reasoning, highlights:init.highlights, source_count:3,
+                sources:[
+                    {url:'https://data.ontario.ca',title:'Ontario Open Data',score:92,tier:'gold',confidence:'high'},
+                    {url:'https://regionofwaterloo.ca',title:'Region of Waterloo',score:88,tier:'gold',confidence:'high'},
+                    {url:'https://cmhc-schl.gc.ca',title:'CMHC Data Portal',score:78,tier:'gold',confidence:'medium'},
+                ],
+            });
+        }
+        const catScore = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+        categories.push({ id:cat.id, name:cat.name, score:catScore, initiative_count:inits.length, assessed_count:inits.length, initiatives:inits });
+        allInits.push(...inits);
+    }
+
+    const overall = Math.round(allInits.map(i=>statusMap[i.status]).reduce((a,b)=>a+b,0)/allInits.length);
+    return { overall_score:overall, total_initiatives:allInits.length, total_assessed:assessed, status_counts:sc, categories, initiatives:allInits };
+}
+</script>
+</body>
+</html>

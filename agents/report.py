@@ -53,7 +53,9 @@ def _assess_initiative(initiative: dict, sources: list[dict]) -> dict:
             "status": "NO_DATA",
             "reasoning": "No validated data sources available.",
             "value": "",
+            "highlights": [],
             "source_count": 0,
+            "sources": [],
         }
 
     llm = get_llm()
